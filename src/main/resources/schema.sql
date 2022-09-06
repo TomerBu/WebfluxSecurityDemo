@@ -1,0 +1,32 @@
+DROP TABLE IF EXISTS user_roles;
+DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS roles;
+CREATE TABLE IF NOT EXISTS users
+(
+    id           INTEGER PRIMARY KEY AUTO_INCREMENT NOT NULL,
+    username     VARCHAR(255) UNIQUE                NOT NULL,
+    display_name VARCHAR(255),
+    password     VARCHAR(255)
+);
+
+
+CREATE TABLE IF NOT EXISTS roles
+(
+    id   INTEGER PRIMARY KEY AUTO_INCREMENT NOT NULL,
+    name VARCHAR(255) UNIQUE                NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS user_roles
+(
+    id INTEGER PRIMARY KEY AUTO_INCREMENT NOT NULL,
+    user_id INTEGER NOT NULL,
+    role_id INTEGER NOT NULL,
+
+    FOREIGN KEY (user_id)
+        REFERENCES users(id)
+        ON UPDATE CASCADE ON DELETE CASCADE,
+
+    FOREIGN KEY (role_id)
+        REFERENCES roles(id)
+        ON UPDATE CASCADE ON DELETE CASCADE
+);
