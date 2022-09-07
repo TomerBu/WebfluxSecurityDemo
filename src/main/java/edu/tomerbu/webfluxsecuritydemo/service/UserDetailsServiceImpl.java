@@ -15,6 +15,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
+
 @Service
 public class UserDetailsServiceImpl implements ReactiveUserDetailsService {
 
@@ -40,18 +42,21 @@ public class UserDetailsServiceImpl implements ReactiveUserDetailsService {
                 )
                 .flatMap(user -> Mono.zip(
                                 Mono.just(user),
-                                userRoleRepo.findByUserId(user.getId())
+                                userRoleRepo
+                                        .findByUserId(user.getId())
+                                        .collectList()
                         )
                 )
                 .flatMap(userAndUserRole -> Mono.zip(
                                 Mono.just(userAndUserRole.getT1()),
-                                roleRepo.findById(
-                                        userAndUserRole.getT2().getRoleId()
-                                )
+                                roleRepo.findByIdIn(
+                                        userAndUserRole.getT2()
+                                                .stream().map(UserRoles::getRoleId)
+                                                .toList()).collectList()
                         )
                 )
                 .map(userAndRole -> userAndRole
-                        .getT1().withRole(userAndRole.getT2()));
+                        .getT1().withRoles(userAndRole.getT2()));
     }
 
     public Mono<User> signup(@RequestBody SignUpRequest ar) {
@@ -60,7 +65,7 @@ public class UserDetailsServiceImpl implements ReactiveUserDetailsService {
                         Mono.just(User.builder().userName(ar.getUsername())
                                 .displayName(ar.getDisplayName())
                                 .password(encoder.encode(ar.getPassword()))
-                                .role(role)
+                                .roles(List.of(role))
                                 .build()),
                         Mono.just(role))
                 )
@@ -84,5 +89,4 @@ public class UserDetailsServiceImpl implements ReactiveUserDetailsService {
                         Mono.just(userAndUserRole.getT1())
                 );
     }
-
 }

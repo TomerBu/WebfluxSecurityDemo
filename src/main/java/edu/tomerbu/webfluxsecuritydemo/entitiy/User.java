@@ -8,9 +8,13 @@ import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.AuthorityUtils;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Getter
 @Setter
@@ -28,16 +32,21 @@ public class User implements UserDetails {
 
     @Column(value = "display_name")
     private String displayName;
-    @Column
+
     //dont use in Select
     @Transient
     //dont save to db
     @ReadOnlyProperty
-    private Role role;
+    private List<Role> roles;
 
     //builder:
+    public User withRoles(List<Role> roles) {
+        this.setRoles(roles);
+        return this;
+    }
+
     public User withRole(Role role) {
-        this.setRole(role);
+        this.setRoles(List.of(role));
         return this;
     }
 
@@ -46,7 +55,10 @@ public class User implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return AuthorityUtils.createAuthorityList(role.getName());
+        return roles.stream()
+                .map(Role::getName)
+                .map(SimpleGrantedAuthority::new)
+                .toList();
     }
 
     @Override
